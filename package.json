@@ -8,6 +8,7 @@
     "@testing-library/user-event": "^12.1.10",
     "express": "^4.17.1",
     "mapbox-gl": "^1.12.0",
+    "path": "^0.12.7",
     "pg": "^8.4.2",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
@@ -15,7 +16,7 @@
     "web-vitals": "^0.2.4"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "node ./server/index.js && react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
