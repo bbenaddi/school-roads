@@ -12,6 +12,7 @@ const url = 'http://localhost:3001/';
 const Home = () => {
     const [student, setStudent] = useState(1);
     const [school, setSchool] = useState(1);
+    const [oldData, setOldData] = useState([]);
 
     const [schools, setSchools] = useState({ data: [] });
     const [students, setStudents] = useState({ data: [] });
@@ -22,16 +23,16 @@ const Home = () => {
     useEffect(() => {
         mapboxgl.accessToken = 'pk.eyJ1IjoiYmJlbmFkZGkiLCJhIjoiY2tnbzkxcXN4MDAxZzJ0bDgzNXdxcW9uZiJ9.x2jIHTfrSAzgdcJTaUKcTA';
         const initializeMap = ({ setMap, mapContainer }) => {
+
             const map = new mapboxgl.Map({
                 container: mapContainer.current,
                 style: "mapbox://styles/mapbox/streets-v11", // stylesheet location
-                center: [0, 0],
-                zoom: 5
+                center: [-7.64, 33.58],
+                zoom: 12
             });
 
-            map.on("load", () => {
+            map.on('load', function () {
                 setMap(map);
-                map.resize();
             });
         };
 
@@ -57,19 +58,172 @@ const Home = () => {
     const onStudentChange = event => setStudent(event.target.value);
     const onSchoolChange = event => setSchool(event.target.value);
 
-    const renderSchools = () => schools.data.map(school => <option key={school.gid} value={school.gid}> {school.name} </option>);
+    const renderSchools = () => schools.data.map(school => <option key={school.gid} value={school.gid} title={school.name}> {school.name} </option>);
 
-    const renderStudents = () => students.data.map(student => <option key={student.id} value={student.id}> {student.name} {student.prenom} </option>);
+    const renderStudents = () => students.data.map(student => <option key={student.id} value={student.id} title={student.nom+' '+student.prenom}> {student.nom} {student.prenom} </option>);
 
     const onClickHandle = (e) => {
+        console.log(schools);
         //e.preventDefaults();
-        console.log(url + 'road/'+student+'/'+school);
-        axios.get(url + 'road/'+student+'/'+school)
+        axios.get(url + 'road/' + student + '/' + school)
             .then(({ data }) => {
+                console.log(data)
+
+                oldData.forEach(element => {
+                    var id = "L" + element.id;
+                    map.removeLayer(id);
+                    map.removeSource(id);
+                })
+                setOldData(data.result);
+
+                var p1 = data.adrEtu;
+                var p2 = data.adrEco;
+
+                //School Marker
+                map.loadImage(
+                    'http://www.myiconfinder.com/icon/download/24-24-e414d7db351dac6a4e7223bbd16706c9-school.png',
+                    function (error, image) {
+                        if (error) throw error;
+                        map.addImage('schoolMarker'+school, image);
+                        // Add a GeoJSON source with 2 points
+                        map.addSource('pointsSchool'+school, {
+                            'type': 'geojson',
+                            'data': {
+                                'type': 'FeatureCollection',
+                                'features': [
+                                    {
+                                        // feature for Mapbox DC
+                                        'type': 'Feature',
+                                        'geometry': {
+                                            'type': 'Point',
+                                            'coordinates': [
+                                                p2.x,
+                                                p2.y
+                                            ]
+                                        },
+                                        'properties': {
+                                            'title': schools.data[school-1].name
+                                        }
+                                    }
+                                ]
+                            }
+                        });
+
+                        // Add a symbol layer
+                        map.addLayer({
+                            'id': 'pointsSchool'+school,
+                            'type': 'symbol',
+                            'source': 'pointsSchool'+school,
+                            'layout': {
+                                'icon-image': 'schoolMarker'+school,
+                                // get the title name from the source's "title" property
+                                'text-field': ['get', 'title'],
+                                'text-font': [
+                                    'Open Sans Semibold',
+                                    'Arial Unicode MS Bold'
+                                ],
+                                'text-offset': [0, 1.25],
+                                'text-anchor': 'top'
+                            }
+                        });
+                    }
+                );
+
+
+                //Student Marker
+                map.loadImage(
+                    'http://www.myiconfinder.com/icon/download/24-24-4ee75941b34533d1e05d60abba692c54-student.png',
+                    function (error, image) {
+                        if (error) throw error;
+                        map.addImage('studentMarker'+student, image);
+                        // Add a GeoJSON source with 2 points
+                        map.addSource('pointsStudent'+student, {
+                            'type': 'geojson',
+                            'data': {
+                                'type': 'FeatureCollection',
+                                'features': [
+                                    {
+                                        // feature for Mapbox DC
+                                        'type': 'Feature',
+                                        'geometry': {
+                                            'type': 'Point',
+                                            'coordinates': [
+                                                p1.x,
+                                                p1.y
+                                            ]
+                                        },
+                                        'properties': {
+                                            'title': students.data[student-1].nom + ' '+students.data[student-1].prenom
+                                        }
+                                    }
+                                ]
+                            }
+                        });
+
+                        // Add a symbol layer
+                        map.addLayer({
+                            'id': 'pointsStudent'+student,
+                            'type': 'symbol',
+                            'source': 'pointsStudent'+student,
+                            'layout': {
+                                'icon-image': 'studentMarker'+student,
+                                // get the title name from the source's "title" property
+                                'text-field': ['get', 'title'],
+                                'text-font': [
+                                    'Open Sans Semibold',
+                                    'Arial Unicode MS Bold'
+                                ],
+                                'text-offset': [0, 1.25],
+                                'text-anchor': 'top'
+                            }
+                        });
+                    }
+                );
+
+                data.result.forEach(element => {
+                    const geometry = JSON.parse(element.geom);
+                    var geojson = {
+                        'type': 'FeatureCollection',
+                        'features': [
+                            {
+                                'type': 'Feature',
+                                'geometry': {
+                                    'type': 'LineString',
+                                    'properties': {},
+                                    'coordinates': geometry.coordinates
+                                }
+                            },
+                        ]
+                    };
+                    var id = "L" + element.id;
+
+                    map.addSource(id, {
+                        'type': 'geojson',
+                        'data': geojson
+                    });
+                    map.addLayer({
+                        'id': id,
+                        'type': 'line',
+                        'source': id,
+                        'layout': {
+                            'line-join': 'round',
+                            'line-cap': 'round'
+                        },
+                        'paint': {
+                            'line-color': 'blue',
+                            'line-width': 1
+                        }
+                    });
+                });
+                map.flyTo({
+                    center: [p1.x,p1.y],
+                    zoom:14,
+                    essential: true // this animation is considered essential with respect to prefers-reduced-motion
+                    });
             })
             .catch((error) => {
                 console.log(error);
-            });    
+            });
     };
 
     return (
@@ -82,7 +236,7 @@ const Home = () => {
                 <div style={styles.container}>
                     <div style={styles.title}>
                         Menu
-            </div>
+                    </div>
                     <label style={styles.label} >School :</label>
                     <select type="text" style={styles.select} name="school" value={school} onChange={onSchoolChange}>
                         {schools && renderSchools()}
@@ -91,8 +245,8 @@ const Home = () => {
                     <select type="text" style={styles.select} name="student" value={student} onChange={onStudentChange}>
                         {students && renderStudents()}
                     </select>
-                    <button onClick={onClickHandle}>Tracer</button>
-            </div>
+                    <button style={styles.button} onClick={onClickHandle}>Tracer</button>
+                </div>
             </div>
         </div>
     );
@@ -123,7 +277,9 @@ const styles = {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
-        itemsAlign: 'center'
+        itemsAlign: 'center',
+        alignItems: 'center',
+        margin: '11px'
     },
     select: {
         position: 'relative',
@@ -136,6 +292,17 @@ const styles = {
     label: {
         borderRadius: '5px',
         border: '1px solid #ddeff7'
+    },
+    button : {
+        font: 'inherit',
+        margin : '0.6rem',
+        fontWeight: '600',
+        padding: '0.6rem 2rem',
+        background: '#b6f2ff',
+        color: 'currentcolor',
+        border: '1px solid',
+        transition: 'background 100ms ease',
+        position: 'static'
     }
 }
 export default Home;

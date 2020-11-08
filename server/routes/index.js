@@ -47,7 +47,6 @@ router.get('/road/:student/:school', function (req, res) {
         query.on("end", function (result2) {
             const schoolAdresse = result1.rows[0];
             const studentAdresse = result2.rows[0];
-            console.log(schoolAdresse, studentAdresse);
 
             //Adresse close to school
             var query = client.query(new Query(requestRoad(schoolAdresse)));
@@ -56,19 +55,37 @@ router.get('/road/:student/:school', function (req, res) {
             });
 
             query.on("end", function (result3) {
-                    //Adresse close to Student
-                    var query = client.query(new Query(requestRoad(studentAdresse)));
-                    query.on("row", function (row, result4) {
-                        result4.addRow(row);
-                    });
-        
-                    query.on("end", function (result4) {
-                        // result3 source SCHOOL 
-                        // result4 target STUDENT
+                //Adresse close to Student
+                var query = client.query(new Query(requestRoad(studentAdresse)));
+                query.on("row", function (row, result4) {
+                    result4.addRow(row);
+                });
 
+                query.on("end", function (result4) {
+                    // result3 source SCHOOL 
+                    // result4 target STUDENT
+                    const source = result3.rows[0].id;
+                    const target = result4.rows[0].id;
+
+                    var searchNearestRoad = "select min(d.seq) as seq,r.old_id as id , r.name,r.type,sum(r.distance) as distance, ST_AsGeoJSON( ST_MakeLine(r.the_geom)) as geom" +
+                        " from pgr_dijkstra('select id , source ,target , distance as cost from roads_noded'," +
+                        +source + "," + target + ",false) as d,roads_noded as r where d.edge=r.id group by r.old_id,r.name,r.type";
+
+                    console.log(searchNearestRoad);
+                    var query = client.query(new Query(searchNearestRoad));
+                    query.on("row", function (row, result5) {
+                        result5.addRow(row);
+                    });
+
+                    query.on("end", function (result5) {
+                        res.send({
+                            adrEco: schoolAdresse,
+                            adrEtu: studentAdresse,
+                            result :result5.rows
+                        });
                         res.end();
                     });
-                    res.end();
+                });
             });
         });
     });
