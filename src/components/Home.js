@@ -10,8 +10,8 @@ import SideBar from './SideBar'
 const url = 'http://localhost:3001/';
 
 const Home = () => {
-    const [student, setStudent] = useState();
-    const [school, setSchool] = useState();
+    const [student, setStudent] = useState(1);
+    const [school, setSchool] = useState(1);
 
     const [schools, setSchools] = useState({ data: [] });
     const [students, setStudents] = useState({ data: [] });
@@ -38,7 +38,6 @@ const Home = () => {
         if (!map) initializeMap({ setMap, mapContainer });
         axios.get(url + 'schools')
             .then(({ data }) => {
-                console.log("Schools ",data)
                 setSchools({ data });
             })
             .catch((error) => {
@@ -47,7 +46,6 @@ const Home = () => {
 
         axios.get(url + 'students')
             .then(({ data }) => {
-                console.log("Students ",data)
                 setStudents({ data });
             })
             .catch((error) => {
@@ -62,6 +60,17 @@ const Home = () => {
     const renderSchools = () => schools.data.map(school => <option key={school.gid} value={school.gid}> {school.name} </option>);
 
     const renderStudents = () => students.data.map(student => <option key={student.id} value={student.id}> {student.name} {student.prenom} </option>);
+
+    const onClickHandle = (e) => {
+        //e.preventDefaults();
+        console.log(url + 'road/'+student+'/'+school);
+        axios.get(url + 'road/'+student+'/'+school)
+            .then(({ data }) => {
+            })
+            .catch((error) => {
+                console.log(error);
+            });    
+    };
 
     return (
         <div className='home' style={styles.home}>
@@ -82,7 +91,9 @@ const Home = () => {
                     <select type="text" style={styles.select} name="student" value={student} onChange={onStudentChange}>
                         {students && renderStudents()}
                     </select>
-                </div>            </div>
+                    <button onClick={onClickHandle}>Tracer</button>
+            </div>
+            </div>
         </div>
     );
 }
