@@ -14,7 +14,7 @@ const SideBar = () => {
         axios.get(url + 'schools')
             .then(({ data }) => {
                 setSchools({ data });
-                console.log('=>', data);
+                console.log(data);
             })
             .catch((error) => {
                 console.log(error);
@@ -23,7 +23,6 @@ const SideBar = () => {
         axios.get(url + 'students')
             .then(({ data }) => {
                 setStudents({ data });
-                console.log('=>', data);
             })
             .catch((error) => {
                 console.log(error);
@@ -34,12 +33,9 @@ const SideBar = () => {
     const onStudentChange = event => setStudent(event.target.value);
     const onSchoolChange = event => setSchool(event.target.value);
 
-    const renderSchools = () => schools.data.map(school => {
-        console.log(school);
-        return (<option key={school.id} value={school.id}> {school.name} </option>);
-    });
+    const renderSchools = () => schools.data.map(school => <option key={school.gid} value={school.gid}> {school.name} </option>);
 
-    const renderStudents = () => students.data.map(student => <option key={student.id} value={student.id}> {student.name} </option>);
+    const renderStudents = () => students.data.map(student => <option key={student.id} value={student.id}> {student.name} {student.prenom} </option>);
 
     return (
         <div style={styles.container}>
@@ -62,7 +58,7 @@ const styles = {
     title: {
         borderRadius: '5px',
         border: '1px solid #ddeff7',
-        textAlign : 'center'
+        textAlign: 'center'
     },
     container: {
         display: 'flex',

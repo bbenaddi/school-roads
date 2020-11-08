@@ -7,7 +7,7 @@ const { Client, Query } = require('pg')
 var username = "postgres"
 var password = "root"
 var host = "localhost:5432"
-var database = "nyc"
+var database = "school"
 var conString = "postgres://" + username + ":" + password + "@" + host + "/" + database; // Your Database Connection
 
 var client = new Client(conString);
@@ -16,10 +16,17 @@ client
     .then(() => console.log('Database connected'))
     .catch(err => console.error('connection error', err.stack))
 
-var request = "SELECT * FROM nyc_census_blocks";
+var requestSchoolList = "SELECT * FROM ecoles";
+var requestStudentList = "SELECT * FROM etudiant";
 
-router.get('/data', function (req, res) {
-    var query = client.query(new Query(request));
+//'select v.id,v.the_geom from roads_noded_vertices_pgr as v,roads_noded as rn where v.id=(select id from roads_noded_vertices_pgr order by the_geom <-> ST_SetSRID(ST_MakePoint(%x%,%y%),4326) limit 1) limit 1'
+
+router.get('/', function (req, res) {
+    res.send('Index Page');
+});
+
+router.get('/schools', function (req, res) {
+    var query = client.query(new Query(requestSchoolList));
     query.on("row", function (row, result) {
         result.addRow(row);
     });
@@ -30,28 +37,16 @@ router.get('/data', function (req, res) {
     });
 });
 
-router.get('/', function (req, res) {
-    res.send('Index Page');
-});
-
 router.get('/students', function (req, res) {
-    res.end(JSON.stringify([
-        { id: 1 ,name :'student1'},
-        { id: 2 ,name :'student2'},
-        { id: 3 ,name :'student3'},
-        { id: 4 ,name :'student4'},
-        { id: 5 ,name :'student5'},
-    ]));
-});
+    var query = client.query(new Query(requestStudentList));
+    query.on("row", function (row, result) {
+        result.addRow(row);
+    });
 
-router.get('/schools', function (req, res) {
-    res.end(JSON.stringify([
-        { id: 1 ,name :'school1'},
-        { id: 2 ,name :'school2'},
-        { id: 3 ,name :'school3'},
-        { id: 4 ,name :'school4'},
-        { id: 5 ,name :'school5'},
-    ]));
+    query.on("end", function (result) {
+        res.send(result.rows);
+        res.end();
+    });
 });
 
 module.exports = router;
