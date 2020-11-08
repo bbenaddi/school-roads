@@ -23,5 +23,3 @@ Api will run on localhost:3001
 /students
 /schools
 /road/:studentID/:schoolID
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
