@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { map } from "async";
-
 
 const Map = () => {
     const [map, setMap] = useState(null);
