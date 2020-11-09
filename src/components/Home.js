@@ -3,10 +3,6 @@ import axios from "axios";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-/*
-import Map from './Map'
-import SideBar from './SideBar'
-*/
 const url = 'http://localhost:3001/';
 
 const Home = () => {
@@ -23,7 +19,6 @@ const Home = () => {
     useEffect(() => {
         mapboxgl.accessToken = 'pk.eyJ1IjoiYmJlbmFkZGkiLCJhIjoiY2tnbzkxcXN4MDAxZzJ0bDgzNXdxcW9uZiJ9.x2jIHTfrSAzgdcJTaUKcTA';
         const initializeMap = ({ setMap, mapContainer }) => {
-
             const map = new mapboxgl.Map({
                 container: mapContainer.current,
                 style: "mapbox://styles/mapbox/streets-v11", // stylesheet location
@@ -37,22 +32,13 @@ const Home = () => {
         };
 
         if (!map) initializeMap({ setMap, mapContainer });
+
         axios.get(url + 'schools')
-            .then(({ data }) => {
-                setSchools({ data });
-            })
-            .catch((error) => {
-                console.log(error);
-            });
-
+            .then(({ data }) => setSchools({ data }))
+            .catch((error) => console.log(error));
         axios.get(url + 'students')
-            .then(({ data }) => {
-                setStudents({ data });
-            })
-            .catch((error) => {
-                console.log(error);
-            });
-
+            .then(({ data }) => setStudents({ data }))
+            .catch((error) => console.log(error));
     }, [map]);
 
     const onStudentChange = event => setStudent(event.target.value);
@@ -60,170 +46,101 @@ const Home = () => {
 
     const renderSchools = () => schools.data.map(school => <option key={school.gid} value={school.gid} title={school.name}> {school.name} </option>);
 
-    const renderStudents = () => students.data.map(student => <option key={student.id} value={student.id} title={student.nom+' '+student.prenom}> {student.nom} {student.prenom} </option>);
+    const renderStudents = () => students.data.map(student => <option key={student.id} value={student.id} title={student.nom + ' ' + student.prenom}> {student.nom} {student.prenom} </option>);
+
+    const drawMarker = (id, coordinates, title, imageURL) => {
+        map.loadImage(
+            imageURL,
+            function (error, image) {
+                if (error) throw error;
+                map.addImage('I' + id, image);
+                map.addSource('M' + id, {
+                    'type': 'geojson',
+                    'data': {
+                        'type': 'FeatureCollection',
+                        'features': [
+                            {
+                                'type': 'Feature',
+                                'geometry': { 'type': 'Point', 'coordinates': coordinates },
+                                'properties': { 'title': title }
+                            }
+                        ]
+                    }
+                });
+                map.addLayer({
+                    'id': 'M' + id,
+                    'type': 'symbol',
+                    'source': 'M' + id,
+                    'layout': {
+                        'icon-image': 'I' + id,
+                        'text-field': ['get', 'title'],
+                        'text-offset': [0, 1.25],
+                        'text-anchor': 'top'
+                    }
+                });
+            }
+        );
+    }
+
+    const drawLineString = (id) => {
+        map.addSource(id, {
+            'type': 'geojson',
+            'data': {
+                'type': 'FeatureCollection',
+                'features': [
+                    {
+                        'type': 'Feature',
+                        'geometry': {
+                            'type': 'LineString',
+                            'properties': {},
+                            'coordinates': geometry.coordinates
+                        }
+                    },
+                ]
+            }
+        });
+        map.addLayer({
+            'id': id,
+            'type': 'line',
+            'source': id,
+            'layout': {
+                'line-join': 'round',
+                'line-cap': 'round'
+            },
+            'paint': {
+                'line-color': 'blue',
+                'line-width': 1
+            }
+        });
+    }
+    const removeLayerSource = (id) => {
+        map.removeLayer(id);
+        map.removeSource(id);
+    }
 
     const onClickHandle = (e) => {
-        console.log(schools);
-        //e.preventDefaults();
         axios.get(url + 'road/' + student + '/' + school)
             .then(({ data }) => {
-                console.log(data)
+                oldData.forEach(element => removeLayerSource("L" + element.id))
 
-                oldData.forEach(element => {
-                    var id = "L" + element.id;
-                    map.removeLayer(id);
-                    map.removeSource(id);
-                })
                 setOldData(data.result);
 
                 var p1 = data.adrEtu;
                 var p2 = data.adrEco;
 
-                //School Marker
-                map.loadImage(
-                    'http://www.myiconfinder.com/icon/download/24-24-e414d7db351dac6a4e7223bbd16706c9-school.png',
-                    function (error, image) {
-                        if (error) throw error;
-                        map.addImage('schoolMarker'+school, image);
-                        // Add a GeoJSON source with 2 points
-                        map.addSource('pointsSchool'+school, {
-                            'type': 'geojson',
-                            'data': {
-                                'type': 'FeatureCollection',
-                                'features': [
-                                    {
-                                        // feature for Mapbox DC
-                                        'type': 'Feature',
-                                        'geometry': {
-                                            'type': 'Point',
-                                            'coordinates': [
-                                                p2.x,
-                                                p2.y
-                                            ]
-                                        },
-                                        'properties': {
-                                            'title': schools.data[school-1].name
-                                        }
-                                    }
-                                ]
-                            }
-                        });
-
-                        // Add a symbol layer
-                        map.addLayer({
-                            'id': 'pointsSchool'+school,
-                            'type': 'symbol',
-                            'source': 'pointsSchool'+school,
-                            'layout': {
-                                'icon-image': 'schoolMarker'+school,
-                                // get the title name from the source's "title" property
-                                'text-field': ['get', 'title'],
-                                'text-font': [
-                                    'Open Sans Semibold',
-                                    'Arial Unicode MS Bold'
-                                ],
-                                'text-offset': [0, 1.25],
-                                'text-anchor': 'top'
-                            }
-                        });
-                    }
-                );
-
-
-                //Student Marker
-                map.loadImage(
-                    'http://www.myiconfinder.com/icon/download/24-24-4ee75941b34533d1e05d60abba692c54-student.png',
-                    function (error, image) {
-                        if (error) throw error;
-                        map.addImage('studentMarker'+student, image);
-                        // Add a GeoJSON source with 2 points
-                        map.addSource('pointsStudent'+student, {
-                            'type': 'geojson',
-                            'data': {
-                                'type': 'FeatureCollection',
-                                'features': [
-                                    {
-                                        // feature for Mapbox DC
-                                        'type': 'Feature',
-                                        'geometry': {
-                                            'type': 'Point',
-                                            'coordinates': [
-                                                p1.x,
-                                                p1.y
-                                            ]
-                                        },
-                                        'properties': {
-                                            'title': students.data[student-1].nom + ' '+students.data[student-1].prenom
-                                        }
-                                    }
-                                ]
-                            }
-                        });
-
-                        // Add a symbol layer
-                        map.addLayer({
-                            'id': 'pointsStudent'+student,
-                            'type': 'symbol',
-                            'source': 'pointsStudent'+student,
-                            'layout': {
-                                'icon-image': 'studentMarker'+student,
-                                // get the title name from the source's "title" property
-                                'text-field': ['get', 'title'],
-                                'text-font': [
-                                    'Open Sans Semibold',
-                                    'Arial Unicode MS Bold'
-                                ],
-                                'text-offset': [0, 1.25],
-                                'text-anchor': 'top'
-                            }
-                        });
-                    }
-                );
+                drawMarker('e' + school, [p2.x, p2.y], schools.data[school - 1].name,
+                    'http://www.myiconfinder.com/icon/download/24-24-e414d7db351dac6a4e7223bbd16706c9-school.png');
+                drawMarker('s' + student, [p1.x, p1.y], students.data[student - 1].nom + students.data[student - 1].prenom,
+                    'http://www.myiconfinder.com/icon/download/24-24-4ee75941b34533d1e05d60abba692c54-student.png');
 
                 data.result.forEach(element => {
                     const geometry = JSON.parse(element.geom);
-                    var geojson = {
-                        'type': 'FeatureCollection',
-                        'features': [
-                            {
-                                'type': 'Feature',
-                                'geometry': {
-                                    'type': 'LineString',
-                                    'properties': {},
-                                    'coordinates': geometry.coordinates
-                                }
-                            },
-                        ]
-                    };
-                    var id = "L" + element.id;
+                    drawLineString("L" + element.id, geometry)
 
-                    map.addSource(id, {
-                        'type': 'geojson',
-                        'data': geojson
-                    });
-                    map.addLayer({
-                        'id': id,
-                        'type': 'line',
-                        'source': id,
-                        'layout': {
-                            'line-join': 'round',
-                            'line-cap': 'round'
-                        },
-                        'paint': {
-                            'line-color': 'blue',
-                            'line-width': 1
-                        }
-                    });
                 });
-                map.flyTo({
-                    center: [p1.x,p1.y],
-                    zoom:14,
-                    essential: true // this animation is considered essential with respect to prefers-reduced-motion
-                    });
+                map.flyTo({ center: [p1.x, p1.y], zoom: 14, essential: true });
             })
-            .catch((error) => {
-                console.log(error);
-            });
+            .catch((error) => console.log(error));
     };
 
     return (
@@ -293,9 +210,9 @@ const styles = {
         borderRadius: '5px',
         border: '1px solid #ddeff7'
     },
-    button : {
+    button: {
         font: 'inherit',
-        margin : '0.6rem',
+        margin: '0.6rem',
         fontWeight: '600',
         padding: '0.6rem 2rem',
         background: '#b6f2ff',
