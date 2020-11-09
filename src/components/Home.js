@@ -82,7 +82,7 @@ const Home = () => {
         );
     }
 
-    const drawLineString = (id) => {
+    const drawLineString = (id,geometry) => {
         map.addSource(id, {
             'type': 'geojson',
             'data': {
