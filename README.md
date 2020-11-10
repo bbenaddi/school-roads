@@ -1,6 +1,7 @@
 # School Roads
 
 This project is data extraction from QGIS, stored in Postgres with extention of postgis, Evaluated by pgrouting to link Students to Schools in sroundings.
+![Home Page](https://i.imgur.com/JXoljZ5.png)
 
 ### Install
 
