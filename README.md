@@ -21,13 +21,10 @@ $> yarn add
 
 ## Configuration
 
-### Database
-
-Fill connection object in './server/db.config.js'
+Rename .env.sample to .env, and fill the varibales.
 
 ### MapBox
 
-Fill MapBox AccessToken in './src/components/Home.js'
 
 ## Run the enviroment
 
