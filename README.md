@@ -23,9 +23,6 @@ $> yarn add
 
 Rename .env.sample to .env, and fill the varibales.
 
-### MapBox
-
-
 ## Run the enviroment
 
 In the project directory, you can run:
