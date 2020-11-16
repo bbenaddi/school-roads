@@ -3,7 +3,9 @@ import axios from "axios";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-const url = 'http://localhost:3001/';
+require('dotenv').config()
+
+const url = process.env.REACT_APP_SERVERURL;
 
 const Home = () => {
     const [student, setStudent] = useState(1);
@@ -17,11 +19,11 @@ const Home = () => {
     const mapContainer = useRef(null);
 
     useEffect(() => {
-        mapboxgl.accessToken = 'pk.eyJ1IjoiYmJlbmFkZGkiLCJhIjoiY2tnbzkxcXN4MDAxZzJ0bDgzNXdxcW9uZiJ9.x2jIHTfrSAzgdcJTaUKcTA';
+        mapboxgl.accessToken = process.env.REACT_APP_ACCESSTOKEN;
         const initializeMap = ({ setMap, mapContainer }) => {
             const map = new mapboxgl.Map({
                 container: mapContainer.current,
-                style: "mapbox://styles/mapbox/streets-v11", // stylesheet location
+                style: process.env.REACT_APP_STYLE,
                 center: [-7.64, 33.58],
                 zoom: 12
             });

@@ -1,7 +1,9 @@
+require('dotenv').config()
+
 exports.config = {
-    username : "postgres",
-    password : "root",
-    host : "localhost",
-    port :5432,
-    database : "school",
+    username : process.env.DUSERNAME,
+    password : process.env.DPASSWORD,
+    host : process.env.DHOST,
+    port :process.env.DPORT,
+    database : process.env.DDATABASE,
 };

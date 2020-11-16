@@ -7,20 +7,26 @@ This project is data extraction from QGIS, stored in Postgres with extention of 
 
 ### Import Data
 
-Extract backup.sql
+Extract backup.sql from  backup.rar
 
-Run psql -U username -d database < backup.sql
+```
+$> psql -U username -d database < backup.sql
+```
 
 ### Install
 
-Run npm install
+```
+$> yarn add
+```
 
 ## Configuration
 
 ### Database
+
 Fill connection object in './server/db.config.js'
 
 ### MapBox
+
 Fill MapBox AccessToken in './src/components/Home.js'
 
 ## Run the enviroment
@@ -29,12 +35,16 @@ In the project directory, you can run:
 
 ### Front End
 
-Runs npm start
+```
+$> yarn start
+```
 App will run on localhost:3000
 
 ### Back End
 
-Runs node ./server/index/js
+```
+$> node ./server/index/js
+```
 Api will run on localhost:3001
 
 /students<br />
