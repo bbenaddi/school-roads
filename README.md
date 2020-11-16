@@ -36,14 +36,14 @@ In the project directory, you can run:
 ### Front End
 
 ```
-$> yarn start
+$> yarn run start
 ```
 App will run on localhost:3000
 
 ### Back End
 
 ```
-$> node ./server/index/js
+$> yarn run server
 ```
 Api will run on localhost:3001
 

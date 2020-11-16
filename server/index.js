@@ -12,5 +12,5 @@ var indexRouter = require('./routes/index');
 app.use('/', indexRouter);
 
 app.listen(port, () => {
-    console.log(`School Roads App listening at http://localhost:${port}`);
+    console.log(`School Roads Backend listening at http://localhost:${port}`);
 })
