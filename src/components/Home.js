@@ -18,6 +18,7 @@ const Home = () => {
     const [map, setMap] = useState(null);
     const mapContainer = useRef(null);
 
+
     useEffect(() => {
         mapboxgl.accessToken = process.env.REACT_APP_ACCESSTOKEN;
         const initializeMap = ({ setMap, mapContainer }) => {
@@ -30,7 +31,20 @@ const Home = () => {
 
             map.on('load', function () {
                 setMap(map);
+/*
+                map.on('click', function (e) {
+                    var coordinates = e.lngLat;
+                    new mapboxgl.Popup()
+                        .setLngLat(coordinates)
+                        .setHTML('<h1><strong>You are Here:</strong></h1> <br/>')
+                        .addTo(map);
+                    const point = map.project(coordinates);
+
+                    setLocation(point);
+                });
+*/
             });
+
         };
 
         if (!map) initializeMap({ setMap, mapContainer });
@@ -47,7 +61,6 @@ const Home = () => {
     const onSchoolChange = event => setSchool(event.target.value);
 
     const renderSchools = () => schools.data.map(school => <option key={school.gid} value={school.gid} title={school.name}> {school.name} </option>);
-
     const renderStudents = () => students.data.map(student => <option key={student.id} value={student.id} title={student.nom + ' ' + student.prenom}> {student.nom} {student.prenom} </option>);
 
     const drawMarker = (id, coordinates, title, imageURL) => {
@@ -84,7 +97,7 @@ const Home = () => {
         );
     }
 
-    const drawLineString = (id,geometry) => {
+    const drawLineString = (id, geometry, color = 'blue') => {
         map.addSource(id, {
             'type': 'geojson',
             'data': {
@@ -105,14 +118,8 @@ const Home = () => {
             'id': id,
             'type': 'line',
             'source': id,
-            'layout': {
-                'line-join': 'round',
-                'line-cap': 'round'
-            },
-            'paint': {
-                'line-color': 'blue',
-                'line-width': 1
-            }
+            'layout': { 'line-join': 'round', 'line-cap': 'round' },
+            'paint': { 'line-color': color, 'line-width': 1 }
         });
     }
     const removeLayerSource = (id) => {
@@ -120,8 +127,8 @@ const Home = () => {
         map.removeSource(id);
     }
 
-    const onClickHandle = (e) => {
-        axios.get(url + 'road/' + student + '/' + school)
+    const onShortDistanceClick = (e) => {
+        axios.post(url + 'shortest/' + student + '/' + school)
             .then(({ data }) => {
                 oldData.forEach(element => removeLayerSource("L" + element.id))
 
@@ -145,6 +152,31 @@ const Home = () => {
             .catch((error) => console.log(error));
     };
 
+    const onSafeDistanceClick = (e) => {
+        axios.post(url + 'safest/' + student + '/' + school)
+            .then(({ data }) => {
+                oldData.forEach(element => removeLayerSource("L" + element.id))
+
+                setOldData(data.result);
+
+                var p1 = data.adrEtu;
+                var p2 = data.adrEco;
+
+                drawMarker('e' + school, [p2.x, p2.y], schools.data[school - 1].name,
+                    'http://www.myiconfinder.com/icon/download/24-24-e414d7db351dac6a4e7223bbd16706c9-school.png');
+                drawMarker('s' + student, [p1.x, p1.y], students.data[student - 1].nom + students.data[student - 1].prenom,
+                    'http://www.myiconfinder.com/icon/download/24-24-4ee75941b34533d1e05d60abba692c54-student.png');
+
+                data.result.forEach(element => {
+                    const geometry = JSON.parse(element.geom);
+                    drawLineString("L" + element.id, geometry, 'green')
+
+                });
+                map.flyTo({ center: [p1.x, p1.y], zoom: 14, essential: true });
+            })
+            .catch((error) => console.log(error));
+    }
+
     return (
         <div className='home' style={styles.home}>
             <div className="map 8" style={styles.map}>
@@ -164,7 +196,8 @@ const Home = () => {
                     <select type="text" style={styles.select} name="student" value={student} onChange={onStudentChange}>
                         {students && renderStudents()}
                     </select>
-                    <button style={styles.button} onClick={onClickHandle}>Tracer</button>
+                    <button style={styles.button} onClick={onShortDistanceClick}>Shortest Path</button>
+                    <button style={styles.button} onClick={onSafeDistanceClick}>Safest Path</button>
                 </div>
             </div>
         </div>
